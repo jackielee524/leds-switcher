@@ -8,6 +8,10 @@
 #include <linux/platform_device.h>
 #include <linux/property.h>
 #include <linux/slab.h>
+#include <linux/cdev.h>
+#include <linux/init.h>
+#include <linux/ioctl.h>
+#include <linux/leds.h>
 
 #include "leds-tm1681.h"
 #include "leds-switcher.h"
@@ -85,6 +89,22 @@ const struct led2_t g_led_rg[] = {
 	{KEY_LED_PGM_3, {{67, 68, 76}, {99, 100, 108}}},
 	{KEY_LED_PGM_4, {{55, 63, 75}, {98, 106, 107}}},
 };
+
+#define DEV_NAME	"leds-switcher"
+
+#ifndef LED_MAJOR
+#define LED_MAJOR	76
+#endif
+
+int dev_count = 1;
+
+int dev_major = LED_MAJOR;
+int dev_minor = 0;
+
+static struct cdev      *led_cdev;
+
+static struct platform_device *g_leds_device = NULL;
+
 
 bool isValidLed(const int led)
 {
@@ -355,7 +375,7 @@ int switcher_set_led(struct platform_device *pdev,
 			}
 			break;
 	}
-	
+
 	return 0;
 }
 
@@ -460,7 +480,7 @@ static int leds_switcher_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "brightness property not found\n");
 		goto error_free;
 	}
-	
+
 	if (tmp > 15)
 		tmp = 15;
 
@@ -518,6 +538,8 @@ static int leds_switcher_probe(struct platform_device *pdev)
 
 	pdev->dev.platform_data = pdata;
 
+	g_leds_device = pdev;
+
 	tm1681_init(pdev);
 
 	platform_set_drvdata(pdev, priv);
@@ -570,7 +592,150 @@ static struct platform_driver leds_switcher_driver = {
 	.remove		= leds_switcher_remove,
 };
 
-module_platform_driver(leds_switcher_driver);
+//module_platform_driver(leds_switcher_driver);
+
+static int leds_switcher_open(struct inode *inode, struct file *file)
+{
+	return 0;
+}
+
+static int leds_switcher_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
+
+static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	int blink = 0;
+
+	switch(cmd)
+	{
+		case IOCTL_LED_OFF:
+		case IOCTL_LED_ON:
+		case IOCTL_LED_W:
+		case IOCTL_LED_R:
+		case IOCTL_LED_G:
+			switcher_set_led(g_leds_device, arg, cmd);
+			break;
+		case IOCTL_BRIGHTNESS:
+			tm1681_brightness_set(g_leds_device, arg);
+			break;
+		case IOCTL_BLINK:
+			switch(arg)
+			{
+				case LEDS_BLINK_OFF:
+					blink = TM1681_BLINK_OFF;
+					break;
+				case LEDS_BLINK_2Hz:
+					blink = TM1681_BLINK_2Hz;
+					break;
+				case LEDS_BLINK_1Hz:
+					blink = TM1681_BLINK_1Hz;
+					break;
+				case LEDS_BLINK_0_5Hz:
+					blink = TM1681_BLINK_0_5Hz;
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
+
+			tm1681_blink_set(g_leds_device, blink);
+			break;
+		default:
+			printk(KERN_ERR "%s driver don't support ioctl command=%d\n", DEV_NAME, cmd);
+			return -ENOTTY;
+			break;
+	}
+
+	return 0;
+}
+
+static struct file_operations led_switcher_fops =
+{
+	.owner = THIS_MODULE,
+	.open = leds_switcher_open,
+	.release = leds_switcher_release,
+	.unlocked_ioctl = leds_switcher_ioctl,
+};
+
+static int __init leds_switcher_init(void)
+{
+	int                    result;
+	dev_t                  devno;
+
+	result = platform_driver_register(&leds_switcher_driver);
+	if (result)
+		printk(KERN_ERR "leds-switcher: register failed: %d\n", result);
+
+	/*  Alloc the device for driver */
+	if (0 != dev_major) /*  Static */
+	{
+		//分配设备号
+		devno = MKDEV(dev_major, 0);
+		result = register_chrdev_region (devno, dev_count, DEV_NAME);
+	}
+	else
+	{
+		result = alloc_chrdev_region(&devno, dev_minor, dev_count, DEV_NAME);
+		dev_major = MAJOR(devno);
+	}
+
+	/*  Alloc for device major failure */
+	if (result < 0)
+	{
+		printk(KERN_ERR "%s driver can't use major %d\n", DEV_NAME, dev_major);
+		return -ENODEV;
+	} 
+	printk(KERN_DEBUG "%s driver use major %d\n", DEV_NAME, dev_major);
+
+	//注册字符设备结构体
+	if(NULL == (led_cdev = cdev_alloc()) )
+	{
+		printk(KERN_ERR "%s driver can't alloc for the cdev.\n", DEV_NAME);
+		unregister_chrdev_region(devno, dev_count);
+		return -ENOMEM;
+	}
+
+	led_cdev->owner = THIS_MODULE;
+	cdev_init(led_cdev, &led_switcher_fops);//结构体初始化
+
+	result = cdev_add(led_cdev, devno, dev_count);//结构体注册到内核
+	if (0 != result)
+	{
+		printk(KERN_INFO "%s driver can't reigster cdev: result=%d\n", DEV_NAME, result);
+		goto ERROR;
+	}
+
+
+	printk(KERN_ERR "%s driver[major=%d] version 1.0.0 installed successfully!\n", DEV_NAME, dev_major);
+	return 0;
+
+ERROR:
+	printk(KERN_ERR "%s driver installed failure.\n", DEV_NAME);
+	cdev_del(led_cdev);
+	unregister_chrdev_region(devno, dev_count);
+	return result;
+}
+
+static void __exit leds_switcher_exit(void)
+{
+	dev_t devno = MKDEV(dev_major, dev_minor);
+
+	cdev_del(led_cdev);
+	unregister_chrdev_region(devno, dev_count);
+
+	platform_driver_unregister(&leds_switcher_driver);
+
+	printk(KERN_ERR "%s driver version 1.0.0 removed!\n", DEV_NAME);
+
+	return ;
+}
+
+module_init(leds_switcher_init);
+module_exit(leds_switcher_exit);
+
+module_param(dev_major, int, S_IRUGO);
 
 MODULE_AUTHOR("Jackie Lee(OSEE)");
 MODULE_DESCRIPTION("les-switcher driver");

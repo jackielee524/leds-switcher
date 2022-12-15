@@ -122,6 +122,20 @@ enum switcher_led_color_t {
 	SWITCHER_LED_G,
 };
 
+#define IOCTL_LED_OFF		0
+#define IOCTL_LED_ON		1
+#define IOCTL_LED_W		2
+#define IOCTL_LED_R		3
+#define IOCTL_LED_G		4
+#define IOCTL_BRIGHTNESS	5
+#define IOCTL_BLINK		6
+
+#define LEDS_BLINK_OFF        0    //关闭闪烁功能
+#define LEDS_BLINK_2Hz        1    //LED 按 2Hz 的频率闪烁
+#define LEDS_BLINK_1Hz        2    //LED 按 1Hz 的频率闪烁
+#define LEDS_BLINK_0_5Hz      3    //LED 按 0.5Hz 的频率闪烁
+
+
 struct leds_switcher_private_data {
 	struct leds_tm1681_platform_data pdata;
 };
