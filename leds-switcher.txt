@@ -1,0 +1,26 @@
+Device-Tree bindings for leds-switcher driver
+
+Required properties:
+	- compatible = "leds-switcher";
+	- gpio-cs : cs
+	- gpio-wr: wr
+	- gpio-rd: rd
+	- gpio-data: data
+	
+Example nodes:
+
+	leds-switcher { 
+		compatible = "leds-switcher";
+		gpio-cs = <&gpio2 20 1>; /* 60 */
+		gpio-wr = <&gpio2 21 1>; /* 61 */
+		gpio-rd = <&gpio2 22 1>; /* 62 */
+		gpio-data = <&gpio2 23 1>; /* 63 */
+
+		com-mode = "N8";	//N8, N16, P8, P16
+		clk-mode = "rc0";	//slave, rc0, rc1, ext0, ext1
+
+		brightness = <5>;	//0 ~ 15
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};  
