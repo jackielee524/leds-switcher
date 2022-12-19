@@ -7,7 +7,8 @@ PWD := $(shell pwd)
 
 EXTRA_CFLAGS+=-DMODULE
 
-obj-m += leds-switcher.o leds-tm1681.o
+obj-m += leds-sw.o
+leds-sw-objs += leds-tm1681.o leds-switcher.o
 
 modules:
 	@echo ${LINUX_SRC}
