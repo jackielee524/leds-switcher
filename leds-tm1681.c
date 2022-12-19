@@ -402,21 +402,19 @@ int tm1681_init(struct platform_device *pdev)
 	{
 		case TM1681_N_MOS_8:
 		case TM1681_P_MOS_8:
-			count = TM1681_ADDRs_8 / 2;
+			count = TM1681_ADDRs_8;
 			break;
 		case TM1681_N_MOS_16:
 		case TM1681_P_MOS_16:
-			count = TM1681_ADDRs_16 / 2;
+			count = TM1681_ADDRs_16;
 			break;
 		default:
 			return -EINVAL;
 			break;
 	}
 
-	//pdata->led_ram = kmemdup(pdata->led_ram, count, GFP_KERNEL);
-
-	memset((void*)pdata->led_ram, 0, count);
-	WriteDatas(pdev, 0x00, pdata->led_ram, count * 2);
+	memset((void*)pdata->led_ram, 0, sizeof(pdata->led_ram));
+	WriteDatas(pdev, 0x00, pdata->led_ram, count);
 
 	return 0;
 }

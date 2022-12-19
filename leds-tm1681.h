@@ -33,8 +33,9 @@
 
 #define TM1681_BRIGHTNESS(x)	(0xA0 | ((x) & 0x0F))	//从 0-F 变化分别对应1/16--16/16 的 LED 的 16 阶灰度调节
 
-#define TM1681_ADDRs_8	64
-#define TM1681_ADDRs_16	96
+#define TM1681_ADDRs_8		64
+#define TM1681_ADDRs_16		96
+
 
 struct leds_tm1681_platform_data {
 	unsigned int gpio_cs;
@@ -58,7 +59,7 @@ struct leds_tm1681_platform_data {
 	 * | Addr3       | Addr2       |
 	 * +-------------+-------------+
 	 */
-	long unsigned int led_ram[TM1681_ADDRs_16 / 2 / 4];
+	unsigned long led_ram[TM1681_ADDRs_16 / 2 / sizeof(unsigned long)];
 };
 
 
