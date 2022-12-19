@@ -182,6 +182,123 @@ static int WriteDatas(struct platform_device *pdev,
 	return i;
 }
 
+static inline int ReadDataBits(struct platform_device *pdev,
+		uint8_t *sData,
+		uint8_t cnt)   //低位先写
+{
+	struct leds_switcher_private_data *priv = platform_get_drvdata(pdev);
+	struct leds_tm1681_platform_data *pdata = &priv->pdata;
+
+	int i = 0;
+	int ret = 0;
+
+	if (sData == NULL)
+		return -1;
+
+	gpio_direction_input(pdata->gpio_data);
+	*sData = 0;
+
+	for(i = 0; i < cnt; i++)
+	{
+		gpio_set_value(pdata->gpio_rd, 0);
+		udelay(4);
+		gpio_set_value(pdata->gpio_rd, 1);
+		udelay(5);
+		ret = gpio_get_value(pdata->gpio_data);
+		if(ret)
+		{
+			*sData |= 1 << i;
+		}
+		udelay(5);
+	}
+
+	gpio_set_value(pdata->gpio_data, 1);
+	gpio_direction_output(pdata->gpio_data, 1);
+
+	return i;
+}
+
+static int ReadOneData(struct platform_device *pdev,
+		uint8_t saddr,
+		uint8_t *sData)
+{
+	struct leds_switcher_private_data *priv = platform_get_drvdata(pdev);
+	struct leds_tm1681_platform_data *pdata = &priv->pdata;
+
+	int ret = 0;
+
+	if (sData == NULL)
+		return -1;
+
+	gpio_set_value(pdata->gpio_cs, 0);
+	udelay(10);
+
+	WriteCmdBits(pdev, TM1681_READ, 3);    //写入110
+	WriteCmdBits(pdev, saddr << 1, 7);     //写入地址
+	ret = ReadDataBits(pdev, sData, 4);    //读出数据
+
+	gpio_set_value(pdata->gpio_cs, 1);
+	gpio_set_value(pdata->gpio_wr, 1);
+	gpio_set_value(pdata->gpio_rd, 1);
+	udelay(5);
+	gpio_set_value(pdata->gpio_data, 1);                     //***通讯结束必须CS先置高，发送STOP信号，后将通讯口全置高***//
+	udelay(10);
+
+	return ret;
+}
+
+static int ReadDatas(struct platform_device *pdev,
+		uint8_t saddr,
+		void *sData,
+		int cnt)
+{
+	struct leds_switcher_private_data *priv = platform_get_drvdata(pdev);
+	struct leds_tm1681_platform_data *pdata = &priv->pdata;
+
+	int i = 0;
+	int offset = 0;
+
+	uint8_t data;
+	uint8_t *pbuf = (uint8_t *)sData;
+
+	if (sData == NULL)
+		return -1;
+
+	gpio_set_value(pdata->gpio_cs, 0);
+	udelay(10);
+	WriteCmdBits(pdev, TM1681_READ, 3);    //写入101
+	WriteCmdBits(pdev, saddr << 1, 7);              //写入地址
+
+	for(i = 0; i < cnt; i++)
+	{
+		if (i & 1)
+		{
+			ReadDataBits(pdev, &data, 4);
+
+			pbuf[offset] |= data << 4;
+
+			offset++;
+		}
+		else
+		{
+			ReadDataBits(pdev, &data, 4);
+
+			pbuf[offset] = data;
+		}
+
+	}
+
+	udelay(10);
+	gpio_set_value(pdata->gpio_cs, 1);
+	gpio_set_value(pdata->gpio_wr, 1);
+	gpio_set_value(pdata->gpio_rd, 1);
+	udelay(5);
+	gpio_set_value(pdata->gpio_data, 1);                     //***通讯结束必须CS先置高，发送STOP信号，后将通讯口全置高***//
+	udelay(10);
+
+	return i;
+}
+
 //0 ~ 15
 int tm1681_brightness_set(struct platform_device *pdev,
 		int brightness)

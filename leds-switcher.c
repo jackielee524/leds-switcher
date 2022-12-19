@@ -390,7 +390,10 @@ static int leds_switcher_gpio_alloc(const unsigned int pin,
 		if (is_in)
 			ret = gpio_direction_input(pin);
 		else
+		{
+			gpio_set_value(pin, 1);
 			ret = gpio_direction_output(pin, 1);
+		}
 	}
 
 	return ret;
