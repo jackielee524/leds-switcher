@@ -151,7 +151,7 @@ static int WriteDatas(struct platform_device *pdev,
 	uint8_t *pbuf = (uint8_t *)sData;
 
 	if (sData == NULL)
-		return -1;
+		return -ENOMEM;
 
 	gpio_set_value(pdata->gpio_cs, 0);
 	udelay(10);
@@ -193,7 +193,7 @@ static inline int ReadDataBits(struct platform_device *pdev,
 	int ret = 0;
 
 	if (sData == NULL)
-		return -1;
+		return -ENOMEM;
 
 	gpio_direction_input(pdata->gpio_data);
 	*sData = 0;
@@ -228,7 +228,7 @@ static int ReadOneData(struct platform_device *pdev,
 	int ret = 0;
 
 	if (sData == NULL)
-		return -1;
+		return -ENOMEM;
 
 	gpio_set_value(pdata->gpio_cs, 0);
 	udelay(10);
@@ -262,7 +262,7 @@ static int ReadDatas(struct platform_device *pdev,
 	uint8_t *pbuf = (uint8_t *)sData;
 
 	if (sData == NULL)
-		return -1;
+		return -ENOMEM;
 
 	gpio_set_value(pdata->gpio_cs, 0);
 	udelay(10);
@@ -333,7 +333,7 @@ int tm1681_blink_set(struct platform_device *pdev,
 		case TM1681_BLINK_0_5Hz:
 			break;
 		default:
-			return -1;
+			return -EINTR;
 			break;
 	}
 
