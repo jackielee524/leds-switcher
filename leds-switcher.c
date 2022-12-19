@@ -46,22 +46,22 @@ const struct led_t g_led[] = {
 	{KEY_LED_MEM7, {28, -1, -1}},
 	{KEY_LED_MEM8, {27, -1, -1}},
 	{KEY_LED_MEMU, {19, -1, -1}},
-	{KEY_LED_REC, {43, -1, -1}},
-	{KEY_LED_PLAY, {112, -1, -1}},
+	{KEY_LED_REC, {43, -1, -1}},		//R
+	{KEY_LED_PLAY, {112, -1, -1}},		//G
 	{KEY_LED_STOP, {0, -1, -1}},
 	{KEY_LED_PREV_1, {3, -1, -1}},
 	{KEY_LED_NEXT, {1, -1, -1}},
-	{KEY_LED_LIVE, {40, -1, -1}},
-	{KEY_LED_ON_AIR_1, {42, -1, -1}},
-	{KEY_LED_ON_AIR_2, {41, -1, -1}},
+	{KEY_LED_LIVE, {40, -1, -1}},		//R
+	{KEY_LED_ON_AIR_1, {42, -1, -1}},	//R
+	{KEY_LED_ON_AIR_2, {41, -1, -1}},	//R
 	{KEY_LED_BKGD, {11, -1, -1}},
 	{KEY_LED_KEY, {2, -1, -1}},
 	{KEY_LED_DSK, {9, -1, -1}},
-	{KEY_LED_FTB, {32, -1, -1}},
+	{KEY_LED_FTB, {32, -1, -1}},		//R
 	{KEY_LED_MIX, {10, -1, -1}},
 	{KEY_LED_DIP, {18, -1, -1}},
 	{KEY_LED_WIPE, {26, -1, -1}},
-	{KEY_LED_PREV_2, {72, -1, -1}},
+	{KEY_LED_PREV_2, {72, -1, -1}}, 	//R
 	{KEY_LED_CUT, {17, 25, 33}},
 };
 
