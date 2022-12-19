@@ -242,7 +242,7 @@ int switcher_set_led(struct platform_device *pdev,
 	int num;
 
 	if (! isValidLed(led))
-		return -ENOENT;
+		return -ENODEV;
 
 	if (! isValidColor(led, color))
 		return -EINVAL;
@@ -279,6 +279,7 @@ int switcher_set_led(struct platform_device *pdev,
 					}
 					break;
 				default:
+					return -EINVAL;
 					break;
 			}
 
@@ -336,11 +337,17 @@ int switcher_set_led(struct platform_device *pdev,
 							}
 							break;
 						default:
+							return -EINVAL;
 							break;
 					}
 
 					break;
 				}
+			}
+
+			if (i >= num)
+			{
+				return -ENODEV;
 			}
 			break;
 		default:
@@ -367,11 +374,17 @@ int switcher_set_led(struct platform_device *pdev,
 							}
 							break;
 						default:
+							return -EINVAL;
 							break;
 					}
 
 					break;
 				}
+			}
+
+			if (i >= num)
+			{
+				return -ENODEV;
 			}
 			break;
 	}
