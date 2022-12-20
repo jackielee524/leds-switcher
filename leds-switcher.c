@@ -638,7 +638,27 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 		case IOCTL_LED_W:
 		case IOCTL_LED_R:
 		case IOCTL_LED_G:
-			ret = switcher_set_led(g_leds_device, arg, cmd);
+			switch(cmd)
+			{
+				case IOCTL_LED_OFF:
+					blink = SWITCHER_LED_OFF;
+					break;
+				case IOCTL_LED_ON:
+					blink = SWITCHER_LED_ON;
+					break;
+				case IOCTL_LED_W:
+					blink = SWITCHER_LED_W;
+					break;
+				case IOCTL_LED_R:
+					blink = SWITCHER_LED_R;
+					break;
+				case IOCTL_LED_G:
+					blink = SWITCHER_LED_G;
+					break;
+				default:
+					break;
+			}
+			ret = switcher_set_led(g_leds_device, arg, blink);
 			break;
 		case IOCTL_BRIGHTNESS:
 			ret = tm1681_brightness_set(g_leds_device, arg);
