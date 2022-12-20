@@ -150,6 +150,13 @@ static int WriteDatas(struct platform_device *pdev,
 
 	uint8_t *pbuf = (uint8_t *)sData;
 
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
+
 	if (sData == NULL)
 		return -ENOMEM;
 
@@ -192,6 +199,13 @@ static inline int ReadDataBits(struct platform_device *pdev,
 	int i = 0;
 	int ret = 0;
 
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
+
 	if (sData == NULL)
 		return -ENOMEM;
 
@@ -227,6 +241,13 @@ static int ReadOneData(struct platform_device *pdev,
 
 	int ret = 0;
 
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
+
 	if (sData == NULL)
 		return -ENOMEM;
 
@@ -260,6 +281,13 @@ static int ReadDatas(struct platform_device *pdev,
 
 	uint8_t data;
 	uint8_t *pbuf = (uint8_t *)sData;
+
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
 
 	if (sData == NULL)
 		return -ENOMEM;
@@ -306,6 +334,13 @@ int tm1681_brightness_set(struct platform_device *pdev,
 	struct leds_switcher_private_data *priv = platform_get_drvdata(pdev);
 	struct leds_tm1681_platform_data *pdata = &priv->pdata;
 
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
+
 	if (brightness >= 16)
 		brightness = 15;
 	else if (brightness < 0)
@@ -325,6 +360,13 @@ int tm1681_blink_set(struct platform_device *pdev,
 	struct leds_tm1681_platform_data *pdata = &priv->pdata;
 
 	int ret = 0;
+
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
 
 	switch (blink) {
 		case TM1681_BLINK_OFF:
@@ -355,6 +397,13 @@ int tm1681_set_led(struct platform_device *pdev,
 	uint8_t data;
 	int count = 0;
 
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
+
 	if (offset >= 0)
 	{
 		if (value)
@@ -384,6 +433,13 @@ int tm1681_init(struct platform_device *pdev)
 	struct leds_tm1681_platform_data *pdata = &priv->pdata;
 
 	int count = 0;
+
+	if (priv == NULL
+			|| pdata == NULL)
+	{
+		printk("%s: priv:%p, pdata:%p\n", __func__, priv, pdata);
+		return -ENXIO;
+	}
 
 	gpio_set_value(pdata->gpio_cs, 1);
 	gpio_set_value(pdata->gpio_wr, 0);

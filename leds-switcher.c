@@ -96,8 +96,6 @@ const struct led2_t g_led_rg[] = {
 #define LED_MAJOR	76
 #endif
 
-int dev_count = 1;
-
 int dev_major = LED_MAJOR;
 int dev_minor = 0;
 
@@ -491,7 +489,7 @@ static int leds_switcher_probe(struct platform_device *pdev)
 	}
 
 	//brightness
-	ret = of_property_read_u32(np, "brightness ", &tmp);
+	ret = of_property_read_u32(np, "brightness", &tmp);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "brightness property not found\n");
 		goto error_free;
@@ -556,9 +554,11 @@ static int leds_switcher_probe(struct platform_device *pdev)
 
 	g_leds_device = pdev;
 
+	platform_set_drvdata(pdev, priv);
+
 	tm1681_init(pdev);
 
-	platform_set_drvdata(pdev, priv);
+	printk("%s: ok\n", __func__);
 
 	return 0;
 
@@ -573,6 +573,7 @@ free_cs:
 error_free:
 	devm_kfree(&pdev->dev, pdata);
 
+	printk("%s: error !!!\n", __func__);
 	return ret;
 }
 
@@ -688,13 +689,14 @@ static int __init leds_switcher_init(void)
 	if (0 != dev_major) /*  Static */
 	{
 		//分配设备号
-		devno = MKDEV(dev_major, 0);
-		result = register_chrdev_region (devno, dev_count, DEV_NAME);
+		devno = MKDEV(dev_major, dev_minor);
+		result = register_chrdev_region (devno, 1, DEV_NAME);
 	}
 	else
 	{
-		result = alloc_chrdev_region(&devno, dev_minor, dev_count, DEV_NAME);
+		result = alloc_chrdev_region(&devno, 0, 1, DEV_NAME);
 		dev_major = MAJOR(devno);
+		dev_minor = MINOR(devno);
 	}
 
 	/*  Alloc for device major failure */
@@ -703,34 +705,36 @@ static int __init leds_switcher_init(void)
 		printk(KERN_ERR "%s driver can't use major %d\n", DEV_NAME, dev_major);
 		return -ENODEV;
 	} 
-	printk(KERN_DEBUG "%s driver use major %d\n", DEV_NAME, dev_major);
+	printk(KERN_DEBUG "%s driver use major:%d minor:%d (devno:%d)\n", DEV_NAME, dev_major, dev_minor, devno);
 
 	//注册字符设备结构体
 	if(NULL == (led_cdev = cdev_alloc()) )
 	{
 		printk(KERN_ERR "%s driver can't alloc for the cdev.\n", DEV_NAME);
-		unregister_chrdev_region(devno, dev_count);
+		unregister_chrdev_region(devno, 1);
 		return -ENOMEM;
 	}
 
-	led_cdev->owner = THIS_MODULE;
 	cdev_init(led_cdev, &led_switcher_fops);//结构体初始化
+	led_cdev->owner = THIS_MODULE;
+	led_cdev->ops = &led_switcher_fops;
 
-	result = cdev_add(led_cdev, devno, dev_count);//结构体注册到内核
+	result = cdev_add(led_cdev, devno, 1);//结构体注册到内核
 	if (0 != result)
 	{
-		printk(KERN_INFO "%s driver can't reigster cdev: result=%d\n", DEV_NAME, result);
+		printk(KERN_ERR "%s driver can't reigster cdev: result=%d\n", DEV_NAME, result);
 		goto ERROR;
 	}
 
+	printk(KERN_INFO "%s driver[major=%d] installed successfully!\n", DEV_NAME, dev_major);
 
-	printk(KERN_ERR "%s driver[major=%d] version 1.0.0 installed successfully!\n", DEV_NAME, dev_major);
 	return 0;
 
 ERROR:
 	printk(KERN_ERR "%s driver installed failure.\n", DEV_NAME);
 	cdev_del(led_cdev);
-	unregister_chrdev_region(devno, dev_count);
+	unregister_chrdev_region(devno, 1);
+
 	return result;
 }
 
@@ -739,11 +743,11 @@ static void __exit leds_switcher_exit(void)
 	dev_t devno = MKDEV(dev_major, dev_minor);
 
 	cdev_del(led_cdev);
-	unregister_chrdev_region(devno, dev_count);
+	unregister_chrdev_region(devno, 1);
 
 	platform_driver_unregister(&leds_switcher_driver);
 
-	printk(KERN_ERR "%s driver version 1.0.0 removed!\n", DEV_NAME);
+	printk(KERN_ERR "%s driver removed!\n", DEV_NAME);
 
 	return ;
 }
