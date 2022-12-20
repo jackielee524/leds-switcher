@@ -12,6 +12,7 @@
 #include <linux/init.h>
 #include <linux/ioctl.h>
 #include <linux/leds.h>
+#include <linux/uaccess.h>
 
 #include "leds-tm1681.h"
 #include "leds-switcher.h"
@@ -625,6 +626,10 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 {
 	int ret = 0;
 	int blink = 0;
+	void __user *argp = (void __user *)arg;
+
+	struct leds_switcher_private_data *priv = platform_get_drvdata(g_leds_device);
+	struct leds_tm1681_platform_data *pdata = &priv->pdata;
 
 	switch(cmd)
 	{
@@ -659,6 +664,49 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 			}
 
 			ret = tm1681_blink_set(g_leds_device, blink);
+			break;
+		case IOCTL_GET_LED:
+			blink = 0;
+			switch(pdata->com_mode)
+			{
+				case TM1681_N_MOS_8:
+				case TM1681_P_MOS_8:
+					blink = TM1681_ADDRs_8 / 2;
+					break;
+				case TM1681_N_MOS_16:
+				case TM1681_P_MOS_16:
+					blink = TM1681_ADDRs_16 / 2;
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
+
+			copy_to_user(argp, pdata->led_ram, blink);
+			break;
+		case IOCTL_GET_BRIGHTNESS:
+			copy_to_user(argp, &pdata->brightness, _IOC_SIZE(cmd));
+			break;
+		case IOCTL_GET_BLINK:
+			switch(pdata->blink)
+			{
+				case TM1681_BLINK_OFF:
+					blink = LEDS_BLINK_OFF;
+					break;
+				case TM1681_BLINK_2Hz:
+					blink = LEDS_BLINK_2Hz;
+					break;
+				case TM1681_BLINK_1Hz:
+					blink = LEDS_BLINK_1Hz;
+					break;
+				case TM1681_BLINK_0_5Hz:
+					blink = LEDS_BLINK_0_5Hz;
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
+			copy_to_user(argp, &blink, _IOC_SIZE(cmd));
 			break;
 		default:
 			printk(KERN_ERR "%s driver don't support ioctl command=%d\n", DEV_NAME, cmd);
