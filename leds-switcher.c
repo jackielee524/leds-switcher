@@ -623,6 +623,7 @@ static int leds_switcher_release(struct inode *inode, struct file *file)
 
 static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
+	int ret = 0;
 	int blink = 0;
 
 	switch(cmd)
@@ -632,10 +633,10 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 		case IOCTL_LED_W:
 		case IOCTL_LED_R:
 		case IOCTL_LED_G:
-			switcher_set_led(g_leds_device, arg, cmd);
+			ret = switcher_set_led(g_leds_device, arg, cmd);
 			break;
 		case IOCTL_BRIGHTNESS:
-			tm1681_brightness_set(g_leds_device, arg);
+			ret = tm1681_brightness_set(g_leds_device, arg);
 			break;
 		case IOCTL_BLINK:
 			switch(arg)
@@ -657,7 +658,7 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 					break;
 			}
 
-			tm1681_blink_set(g_leds_device, blink);
+			ret = tm1681_blink_set(g_leds_device, blink);
 			break;
 		default:
 			printk(KERN_ERR "%s driver don't support ioctl command=%d\n", DEV_NAME, cmd);
@@ -665,7 +666,7 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 			break;
 	}
 
-	return 0;
+	return ret;
 }
 
 static struct file_operations led_switcher_fops =
