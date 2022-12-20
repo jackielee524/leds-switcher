@@ -122,13 +122,13 @@ enum switcher_led_color_t {
 	SWITCHER_LED_G,
 };
 
-#define IOCTL_LED_OFF		0
-#define IOCTL_LED_ON		1
-#define IOCTL_LED_W		2
-#define IOCTL_LED_R		3
-#define IOCTL_LED_G		4
-#define IOCTL_BRIGHTNESS	5
-#define IOCTL_BLINK		6
+#define IOCTL_LED_OFF		_IOW('c', 0, int)
+#define IOCTL_LED_ON		_IOW('c', 1, int)
+#define IOCTL_LED_W		_IOW('c', 2, int)
+#define IOCTL_LED_R		_IOW('c', 3, int)
+#define IOCTL_LED_G		_IOW('c', 4, int)
+#define IOCTL_BRIGHTNESS	_IOW('s', 0, int)
+#define IOCTL_BLINK		_IOW('s', 1, int)
 
 #define LEDS_BLINK_OFF        0    //关闭闪烁功能
 #define LEDS_BLINK_2Hz        1    //LED 按 2Hz 的频率闪烁
