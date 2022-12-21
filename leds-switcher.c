@@ -626,6 +626,7 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 {
 	int ret = 0;
 	int blink = 0;
+	int tmp;
 	void __user *argp = (void __user *)arg;
 
 	struct leds_switcher_private_data *priv = platform_get_drvdata(g_leds_device);
@@ -641,24 +642,24 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 			switch(cmd)
 			{
 				case IOCTL_LED_OFF:
-					blink = SWITCHER_LED_OFF;
+					tmp = SWITCHER_LED_OFF;
 					break;
 				case IOCTL_LED_ON:
-					blink = SWITCHER_LED_ON;
+					tmp = SWITCHER_LED_ON;
 					break;
 				case IOCTL_LED_W:
-					blink = SWITCHER_LED_W;
+					tmp = SWITCHER_LED_W;
 					break;
 				case IOCTL_LED_R:
-					blink = SWITCHER_LED_R;
+					tmp = SWITCHER_LED_R;
 					break;
 				case IOCTL_LED_G:
-					blink = SWITCHER_LED_G;
+					tmp = SWITCHER_LED_G;
 					break;
 				default:
 					break;
 			}
-			ret = switcher_set_led(g_leds_device, arg, blink);
+			ret = switcher_set_led(g_leds_device, arg, tmp);
 			break;
 		case IOCTL_BRIGHTNESS:
 			ret = tm1681_brightness_set(g_leds_device, arg);
@@ -686,26 +687,26 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 			ret = tm1681_blink_set(g_leds_device, blink);
 			break;
 		case IOCTL_GET_LED:
-			blink = 0;
+			tmp = 0;
 			switch(pdata->com_mode)
 			{
 				case TM1681_N_MOS_8:
 				case TM1681_P_MOS_8:
-					blink = TM1681_ADDRs_8 / 2;
+					tmp = TM1681_ADDRs_8 / 2;
 					break;
 				case TM1681_N_MOS_16:
 				case TM1681_P_MOS_16:
-					blink = TM1681_ADDRs_16 / 2;
+					tmp = TM1681_ADDRs_16 / 2;
 					break;
 				default:
 					return -EINVAL;
 					break;
 			}
 
-			copy_to_user(argp, pdata->led_ram, blink);
+			ret = copy_to_user(argp, pdata->led_ram, tmp);
 			break;
 		case IOCTL_GET_BRIGHTNESS:
-			copy_to_user(argp, &pdata->brightness, _IOC_SIZE(cmd));
+			ret = copy_to_user(argp, &pdata->brightness, _IOC_SIZE(cmd));
 			break;
 		case IOCTL_GET_BLINK:
 			switch(pdata->blink)
@@ -726,7 +727,8 @@ static long leds_switcher_ioctl(struct file *file, unsigned int cmd, unsigned lo
 					return -EINVAL;
 					break;
 			}
-			copy_to_user(argp, &blink, _IOC_SIZE(cmd));
+
+			ret = copy_to_user(argp, &blink, _IOC_SIZE(cmd));
 			break;
 		default:
 			printk(KERN_ERR "%s driver don't support ioctl command=%d\n", DEV_NAME, cmd);
